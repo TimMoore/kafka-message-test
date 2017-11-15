@@ -48,12 +48,14 @@ lazy val `kafka-message-consumer-impl` = (project in file("kafka-message-consume
   .settings(common: _*)
   .settings(
     libraryDependencies ++= Seq(
-      lagomJavadslPersistenceCassandra,
+      lagomJavadslPersistenceJdbc,
+      "org.postgresql" % "postgresql" % "9.4.1212",
       lagomJavadslKafkaClient,
-      lagomJavadslTestKit
+      lombok
     )
   )
   .dependsOn(`kafka-message-consumer-api`, `kafka-message-generator-api`)
+  .dependsOn(`kafka-message-consumer-api`)
 
 val lombok = "org.projectlombok" % "lombok" % "1.16.10"
 
