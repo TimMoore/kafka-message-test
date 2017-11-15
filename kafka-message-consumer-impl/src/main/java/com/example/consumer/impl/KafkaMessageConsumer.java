@@ -29,22 +29,27 @@ public class KafkaMessageConsumer {
     }
 
     void start() {
-        int groupSize = 50;
+        int groupMaxSize = 50;
 
         if (started.compareAndSet(false, true)) {
             kafkaMessageGeneratorService.messages()
                     .subscribe()
                     .atLeastOnce(
                             Flow.<Message>create()
-                                    .groupedWithin(groupSize, new FiniteDuration(1, TimeUnit.SECONDS))
+                                    .groupedWithin(groupMaxSize, new FiniteDuration(1, TimeUnit.SECONDS))
 //                                    .groupedWithin(1, new FiniteDuration(1, TimeUnit.SECONDS))
                                     .mapAsync(1, (List<Message> m) -> {
-                                        log.info("Consumed message: " + m);
-                                        return CompletableFuture.completedFuture(Done.getInstance());
+                                                log.info("GroupSize: " + m.size());
+                                                return CompletableFuture.completedFuture(m.size());
+                                            }
+                                    ).flatMapConcat(groupSize -> {
+                                        // Emit as many 'Done' as there were on the group. Not always the group
+                                        // will be 'groupMaxSize'
+                                        if (groupSize > 0)
+                                            return Source.range(1, groupSize).map(i -> Done.getInstance());
+                                        else
+                                            return Source.empty();
                                     }
-                                    ).flatMapConcat(
-                                            ignored ->
-                                                    Source.range(1, groupSize).map( i -> Done.getInstance())
                             )
                     );
 
