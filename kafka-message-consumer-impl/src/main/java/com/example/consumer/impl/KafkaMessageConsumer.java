@@ -3,11 +3,16 @@ package com.example.consumer.impl;
 import akka.Done;
 import akka.stream.javadsl.Flow;
 import com.example.generator.api.KafkaMessageGeneratorService;
+import com.example.generator.api.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.duration.FiniteDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
@@ -26,12 +31,16 @@ public class KafkaMessageConsumer {
             kafkaMessageGeneratorService.messages()
                     .subscribe()
                     .atLeastOnce(
-                            Flow.fromFunction(m -> {
-                                log.info("Consumed message: " + m);
-                                return Done.getInstance();
-                            })
+                            Flow.<Message>create()
+                                    .groupedWithin(2, new FiniteDuration(1, TimeUnit.SECONDS))
+//                                    .groupedWithin(1, new FiniteDuration(1, TimeUnit.SECONDS))
+                                    .mapAsync(1, (List<Message> m) -> {
+                                        log.info("Consumed message: " + m);
+                                        return CompletableFuture.completedFuture(Done.getInstance());
+                                    })
                     );
 
         }
     }
 }
+
