@@ -8,9 +8,12 @@ import com.example.generator.api.Message;
 import com.lightbend.lagom.javadsl.persistence.PersistentEntityRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.duration.FiniteDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Singleton
@@ -38,13 +41,14 @@ public class KafkaMessageConsumer {
                 .subscribe()
                 .atLeastOnce(
                         Flow.<Message>create()
+                                .groupedWithin(3,  new FiniteDuration(1, TimeUnit.SECONDS))
                                 .mapAsync(
                                         1,
-                                        (Message m) -> {
-//                                            log.info("Consumed message: " + m);
+                                        (List<Message> m) -> {
+                                            log.info("Consumed message: " + m);
                                             return entityRegistry
-                                                    .refFor(DummyEntity.class, m.getId())
-                                                    .ask(new MessageCommand(m.getMessage()));
+                                                    .refFor(DummyEntity.class, m.get(0).getId())
+                                                    .ask(new MessageCommand(m.get(0).getMessage()));
                                         })
                 );
 
