@@ -55,7 +55,6 @@ lazy val `kafka-message-consumer-impl` = (project in file("kafka-message-consume
     )
   )
   .dependsOn(`kafka-message-consumer-api`, `kafka-message-generator-api`)
-  .dependsOn(`kafka-message-consumer-api`)
 
 val lombok = "org.projectlombok" % "lombok" % "1.16.10"
 
