@@ -23,15 +23,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class KafkaMessageGeneratorServiceImpl implements KafkaMessageGeneratorService {
-    private static final PSequence<String> ENTITY_IDS = TreePVector.<String>empty()
-            .plus("Alice")
-            .plus("Bob")
-            .plus("Carol")
-            .plus("David")
-            .plus("Erin")
-            .plus("Frank");
+    private static final PSequence<String> ENTITY_IDS;
+
+    static {
+        // build a big, diverse set of entityIds so that all 40 partitions get data
+        TreePVector<String> names =
+                TreePVector.from(Arrays.asList(
+                        "Alice", "Bob", "Carol", "David", "Erin", "Frank",
+                        "Gareth", "Helen", "Ivan", "Joseph", "Kyle", "Laura",
+                        "Martin", "Neville", "Oscar", "Paula", "Roberta","Sam"
+                ));
+        TreePVector<String> surnames =
+                TreePVector.from(Arrays.asList(
+                        "Smith", "Jones", "Nichols", "Seagull", "McNochols",
+                        "Badulescu", "Baskey", "Burke", "Fonseca", "Cady",
+                        "Willemsen" , "Richard", "Sauber", "Sanders", "Lazarus",
+                        "Simpson"
+                ));
+
+        ENTITY_IDS = TreePVector.from(names
+                .stream()
+                .flatMap(name ->
+                        surnames
+                                .stream()
+                                .map(surname -> name + " " + surname)
+                ).collect(Collectors.toList()));
+    }
+
     private static final int CONCURRENT_ASKS = 10;
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -70,7 +92,16 @@ public class KafkaMessageGeneratorServiceImpl implements KafkaMessageGeneratorSe
     }
 
     @Override
-    public Topic<Message> messages() {
+    public Topic<Message> messagesBeta() {
+        return messages();
+    }
+
+    @Override
+    public Topic<Message> messagesAlpha() {
+        return messages();
+    }
+
+    private Topic<Message> messages() {
         return TopicProducer.taggedStreamWithOffset(MessageSent.TAG.allTags(), (tag, offset) ->
                 persistentEntityRegistry.eventStream(tag, offset)
                         .map(eventAndOffset ->
