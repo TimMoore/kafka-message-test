@@ -2,7 +2,7 @@
 
 
 
-Download and extract http://apache.rediris.es/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
+Download and extract https://archive.apache.org/dist/kafka/0.10.2.0/kafka_2.11-0.10.2.0.tgz
 
 
 Terminal 1:
